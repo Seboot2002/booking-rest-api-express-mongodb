@@ -4,9 +4,9 @@ const crypto = require("../utils/crypto.utils");
 const GroupUseCase = require("../usecases/group.usecase");
 
 class GroupController {
-    constructor(userRepository) {
-        this.userRepository = userRepository;
-        this.groupUseCase = new GroupUseCase(this.userRepository);
+    constructor(groupRepository) {
+        this.groupRepository = groupRepository;
+        this.groupUseCase = new GroupUseCase(this.groupRepository);
     }
 
     async createGroup(req, res) {

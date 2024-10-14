@@ -4,6 +4,7 @@ class GroupRepository {
 
     constructor(db){
         this.collection = db.collection('Group');
+        this.userCollection = db.collection('User');
     }
 
     async create(group) {
@@ -25,8 +26,24 @@ class GroupRepository {
 
         if (!ObjectId.isValid(groupId)) throw new Error('Invalid Group ID format');
 
-        const result = await this.collection.findOne({ _id: ObjectId.createFromHexString(groupId) });
-        return result;
+        const group = await this.collection.findOne({ _id: ObjectId.createFromHexString(groupId) });
+        
+        const memberIds = group.members.map(id => ObjectId.createFromHexString(id));
+        const adminIds = group.members.map(id => ObjectId.createFromHexString(id));
+
+        const members = await this.userCollection.find({ _id: { $in: memberIds } }).toArray();
+        const admins = await this.userCollection.find({ _id: { $in: adminIds } }).toArray();
+
+        const membersNoSen = members.map(({ _id: idH, password: passwordH, ...rest }) => rest);
+        const adminsNoSen = admins.map(({ _id: idH, password: passwordH, ...rest }) => rest);
+        
+        const groupDetails = {
+            ...group,
+            members: membersNoSen,
+            admins: adminsNoSen
+        }
+
+        return groupDetails;
     }
 
     async updateById(groupId, groupData) {
