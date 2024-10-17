@@ -1,6 +1,6 @@
 class RequestModel {
 
-    constructor({ text, viewed, emisor, receptor, created_at }) {
+    constructor({ text, viewed = false, emisor, receptor, created_at }) {
 
         this.text = text;
         this.viewed = viewed;

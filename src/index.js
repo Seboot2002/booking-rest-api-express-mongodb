@@ -5,8 +5,8 @@ const { connect, getDb } = require('./services/mongoService');
 const userRoutes = require("./routes/user.routes");
 const groupRoutes = require("./routes/group.routes");
 const reservationRoutes = require("./routes/reservation.routes");
-const DepartmentRoutes = require("./routes/department.routes");
 const departmentRoutes = require('./routes/department.routes');
+const requestRoutes = require("./routes/request.routes");
 
 (async () => {
     try {
@@ -17,6 +17,7 @@ const departmentRoutes = require('./routes/department.routes');
         app.use('/api/group', groupRoutes(db));
         app.use('/api/reservation', reservationRoutes(db));
         app.use('/api/department', departmentRoutes(db));
+        app.use('/api/request', requestRoutes(db));
 
         const port = process.env.PORT || 3000;
         app.listen(port, () => {

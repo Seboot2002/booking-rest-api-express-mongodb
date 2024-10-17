@@ -4,6 +4,8 @@ class ReservationRepository {
 
     constructor(db) {
         this.collection = db.collection('Reservation');
+        this.userCollection = db.collection('User');
+        this.departmentcollection = db.collection('Department');
     }
 
     async create(reservation) {
@@ -22,15 +24,49 @@ class ReservationRepository {
 
     async findById(reservationId) {
 
-        const result = await this.collection.findOne({ _id: ObjectId.createFromHexString(reservationId) });
-        return result;
+        const reservation = await this.collection.findOne({ _id: ObjectId.createFromHexString(reservationId) }, 
+        {
+            projection: {
+                _id: 0
+            }
+        });
+        const arrendatario = await this.userCollection.findOne({ _id: ObjectId.createFromHexString(reservation.id_user) }, 
+        {
+            projection: {
+                _id: 0,
+                password: 0
+            }
+        });
+        const department = await this.departmentcollection.findOne({ _id: ObjectId.createFromHexString(reservation.id_department) }, 
+        {
+            projection: {
+                _id: 0,
+                password: 0
+            }
+        });
+        const arrendador = await this.userCollection.findOne({ _id: ObjectId.createFromHexString(department.arrendador) }, 
+        {
+            projection: {
+                _id: 0,
+                password: 0
+            }
+        });
+        department.arrendador = arrendador;
+
+        const reservationDetails = {
+            ...reservation,
+            id_user: arrendatario,
+            id_department: department
+        }
+
+        return reservationDetails;
     }
 
     async updateById(reservationId, reservationData) {
 
         const currentReservation = await this.findById(reservationId);
         if (!currentReservation) {
-            throw new Error('Group not found');
+            throw new Error('Reservation not found');
         }
 
         const result = await this.collection.updateOne(

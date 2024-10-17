@@ -26,9 +26,9 @@ class ReservationController {
     async getReservationData(req, res) {
         
         try {
-            const group = await this.reservationUseCase.getReservationData(req.params.id);
+            const reservation = await this.reservationUseCase.getReservationData(req.params.id);
 
-            res.status(201).send(group);
+            res.status(201).send(reservation);
 
         } catch (error) {
             res.status(400).json({ error: error.message });
