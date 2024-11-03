@@ -1,0 +1,198 @@
+services:
+
+  conf_serv:
+    image: mongo:8.0
+    container_name: conf_serv
+    ports:
+      - "27090:27019"
+    command: --configsvr --replSet rs_config
+    volumes:
+      - conf_serv:/data/db
+    networks:
+      - mongo-cluster
+
+  conf_serv_s1:
+    image: mongo:8.0
+    container_name: conf_serv_s1
+    ports:
+      - "27091:27019"
+    command: --configsvr --replSet rs_config
+    volumes:
+      - conf_serv_s1:/data/db
+    networks:
+      - mongo-cluster
+    
+  conf_serv_s2:
+    image: mongo:8.0
+    container_name: conf_serv_s2
+    ports:
+      - "27092:27019"
+    command: --configsvr --replSet rs_config
+    volumes:
+      - conf_serv_s2:/data/db
+    networks:
+      - mongo-cluster
+
+  shard1:
+    image: mongo:8.0
+    container_name: shard1
+    volumes:
+      - shard1:/data/db
+    networks:
+      - mongo-cluster
+    ports:
+      - 27030:27030
+    command: --shardsvr --replSet shardReplSet1 --port 27030
+  
+  shard1_replica:
+    image: mongo:8.0
+    container_name: shard1_replica
+    volumes:
+      - shard1_replica:/data/db
+    networks:
+      - mongo-cluster
+    ports:
+      - 27031:27031
+    command: --shardsvr --replSet shardReplSet1 --port 27031
+
+  shard1_arbiter:
+    image: mongo:8.0
+    container_name: shard1_arbiter
+    volumes:
+      - shard1_arbiter:/data/db
+    networks:
+      - mongo-cluster
+    ports:
+      - 27032:27032
+    command: --shardsvr --replSet shardReplSet1 --port 27032
+
+  shard2:
+    image: mongo:8.0
+    container_name: shard2
+    volumes:
+      - shard2:/data/db
+    networks:
+      - mongo-cluster
+    ports:
+      - 27040:27040
+    command: --shardsvr --replSet shardReplSet2 --port 27040
+
+  shard2_replica:
+    image: mongo:8.0
+    container_name: shard2_replica
+    volumes:
+      - shard2_replica:/data/db
+    networks:
+      - mongo-cluster
+    ports:
+      - 27041:27041
+    command: --shardsvr --replSet shardReplSet2 --port 27041
+
+  shard2_arbiter:
+    image: mongo:8.0
+    container_name: shard2_arbiter
+    volumes:
+      - shard2_arbiter:/data/db 
+    networks:
+      - mongo-cluster
+    ports:
+      - 27042:27042
+    command: --shardsvr --replSet shardReplSet2 --port 27042
+  
+  mongos:
+    image: mongo:8.0
+    container_name: mongos
+    ports:
+     - "27010:27017"
+    command: ["mongos", "--configdb", "rs_config/conf_serv:27019", "--bind_ip_all"]
+    depends_on:
+      - conf_serv
+      - conf_serv_s1
+      - conf_serv_s2
+    networks:
+      - mongo-cluster
+
+  setup-sharding:
+    image: mongo:8.0
+    container_name: setup-sharding
+    depends_on:
+      - conf_serv
+      - conf_serv_s1
+      - conf_serv_s2
+      - mongos
+      - shard1
+      - shard2
+    networks:
+      - mongo-cluster
+    entrypoint: >
+      bash -c "
+      sleep 60;
+      echo 'Activando el conf_serv';
+      mongosh --host conf_serv --port 27019 --eval 'rs.initiate({
+        _id: \"rs_config\",
+        configsvr: true,
+        members: [
+          { _id: 0, host: \"conf_serv:27019\" },
+          { _id: 1, host: \"conf_serv_s1:27019\" },
+          { _id: 2, host: \"conf_serv_s2:27019\" }
+        ]
+      })';
+      sleep 10;
+      echo 'Activando el shard1';
+      mongosh --host shard1 --port 27030 --eval 'rs.initiate({
+        _id: \"shardReplSet1\",
+        members: [
+          { _id: 0, host: \"shard1:27030\", priority: 2 },
+          { _id: 1, host: \"shard1_replica:27031\", priority: 1 }
+        ]
+      })';
+      sleep 10;
+      echo 'Activando el shard2';
+      mongosh --host shard2 --port 27040 --eval 'rs.initiate({
+        _id: \"shardReplSet2\",
+        members: [
+          { _id: 0, host: \"shard2:27040\", priority: 2 },
+          { _id: 1, host: \"shard2_replica:27041\", priority: 1 }
+        ]
+      })';
+      sleep 10;
+      echo 'Activando el mongos';
+      mongosh --host mongos --port 27017 --eval '
+      sh.addShard(\"shardReplSet1/shard1:27030\");
+      sh.addShard(\"shardReplSet2/shard2:27040\");
+      ';
+      sleep 10;
+      mongosh --host mongos --port 27017 --eval '
+      sh.enableSharding(\"user-db\");
+      sh.enableSharding(\"capital-db\");
+      sh.enableSharding(\"notification-db\");
+      
+      db.getSiblingDB(\"user-db\").createCollection(\"User\");
+      sh.shardCollection(\"user-db.User\", { \"_id\": \"hashed\" });
+
+      db.getSiblingDB(\"capital-db\").createCollection(\"Capital\");
+      sh.shardCollection(\"capital-db.Capital\", { \"_id\": \"hashed\" });
+
+      db.getSiblingDB(\"notification-db\").createCollection(\"Notification\");
+      sh.shardCollection(\"notification-db.Notification\", { \"_id\": \"hashed\" });
+
+      // Añadir sharding para config.system.sessions
+      sh.shardCollection(\"config.system.sessions\", { \"_id\": \"hashed\" });
+      ';
+      "
+
+networks:
+  mongo-cluster:
+    driver: bridge
+    external: true
+    
+volumes:
+  conf_serv:
+  conf_serv_s1:
+  conf_serv_s2:
+  shard1:
+  shard1_replica:
+  shard1_arbiter:
+  shard2:
+  shard2_replica:
+  shard2_arbiter:

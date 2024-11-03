@@ -1,0 +1,63 @@
+services:
+
+  user-microservice:
+    image: node:user
+    build:
+      context: ../../user-microservice
+      dockerfile: Dockerfile
+    container_name: user-microservice
+    ports:
+      - "3010:3000"
+    #depends_on:
+    #  - mongo1
+    environment:
+      - MONGO_URI=mongodb://mongos:27017/?directConnection=true
+      - PORT=3000
+      - DB_NAME=user-db
+    networks:
+      - mongo-cluster
+      - kafka-network
+
+  capital-microservice:
+    image: node:capital
+    build:
+      context: ../../capital-microservice
+      dockerfile: Dockerfile
+    container_name: capital-microservice
+    ports:
+      - "3020:3001"
+    #depends_on:
+    #  - mongo1
+    environment:
+      - MONGO_URI=mongodb://mongos:27017/?directConnection=true
+      - PORT=3001
+      - DB_NAME=capital-db
+    networks:
+      - mongo-cluster
+      - kafka-network
+  
+  notification-microservice:
+    image: node:notification
+    build:
+      context: ../../notification-microservice
+      dockerfile: Dockerfile
+    container_name: notification-microservice
+    ports:
+      - "3030:3002"
+    #depends_on:
+    #  - mongo1
+    environment:
+      - MONGO_URI=mongodb://mongos:27017/?directConnection=true
+      - PORT=3002
+      - DB_NAME=notification-db
+    networks:
+      - mongo-cluster
+      - kafka-network
+
+networks:
+  mongo-cluster:
+    driver: bridge
+    external: true
+  kafka-network:
+    driver: bridge
+    external: true
