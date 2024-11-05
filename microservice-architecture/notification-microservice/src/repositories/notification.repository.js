@@ -20,13 +20,17 @@ class NofiticationRepository {
 
             console.log("Evento recibido:", event);
             
-            /*if (event.type === "CREATE_NOTIFICATION") {
-                await this.create(event.data);
-                console.log("Notificacion creada:", event.data);
-            }*/
+            let userEmailUpdated = event.updatedFields.email;
+            let TimeUserUpdated = event.timestamp;
 
-            await this.create(event.data);
-            console.log("Notificacion creada:", event.data);
+            const result = {
+                message: `Se ha actualizado tu usuario a ${userEmailUpdated}`,
+                created_at: TimeUserUpdated,
+                user: event.user_id
+            }
+
+            await this.create(result);
+            console.log("Notificacion creada:", event);
             
         } catch (error) {
             console.error("Error al procesar el mensaje:", error);

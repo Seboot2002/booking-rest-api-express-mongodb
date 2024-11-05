@@ -67,8 +67,8 @@ class UserRepository {
         if (result.matchedCount > 0) {
 
             await this.kafkaProducer.publish("user-updates", {
-                _id: userId,
                 updatedFields: dataUpdated,
+                user_id: userId,
                 timestamp: new Date()
             });
             console.log(`Mensaje enviado a Kafka para la actualización del usuario ${userId}`);
