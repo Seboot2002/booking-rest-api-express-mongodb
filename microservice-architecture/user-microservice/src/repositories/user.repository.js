@@ -40,6 +40,27 @@ class UserRepository {
         return result;
     }
 
+    async findUsersByIds(userIds){
+
+        if (!Array.isArray(userIds) || userIds.length === 0) {
+            throw new Error(`userIds debe ser un arreglo no vacío`);
+        }
+
+        const objectIds = userIds.map(id => {
+            if (!ObjectId.isValid(id)) {
+                throw new Error(`ID inválido: ${id}`);
+            }
+            return ObjectId.createFromHexString(id);
+        });
+
+        const users = await this.collection
+            .find({ _id: { $in: objectIds } })
+            .project({ _id: 0, email: 1 })
+            .toArray();
+        
+        return users;
+    }
+
     async findByEmail(email) {
         return await this.collection.findOne({ email });
     }

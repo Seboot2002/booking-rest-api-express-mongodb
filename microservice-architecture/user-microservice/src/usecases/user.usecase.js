@@ -63,6 +63,13 @@ class UserUseCase {
         return user;
     }
 
+    async getUsersBulkData(userIds){
+
+        const users = await this.userRepository.findUsersByIds(userIds);
+
+        return users;
+    }
+
     async updateUser(userId, userData){
 
         const check = await this.userRepository.updateById(userId, userData);

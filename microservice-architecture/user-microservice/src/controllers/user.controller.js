@@ -47,6 +47,21 @@ class UserController {
         }
     }
 
+    async getBulkUsers(req, res) {
+
+        try {
+            let userIds = req.body.userIds;
+
+            let users = await this.userUseCase.getUsersBulkData(userIds);
+            
+            res.status(201).send(users);
+
+        } catch (error) {
+            console.error("Error en /api/user/bulk:", error.message);
+            res.status(500).json({ error: "Error al obtener los detalles de los usuarios." });
+        }
+    }
+
     async getData(req, res) {
 
         try {

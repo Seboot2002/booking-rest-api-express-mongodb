@@ -53,6 +53,24 @@ services:
     networks:
       - mongo-cluster
       - kafka-network
+  
+  tenant-group-microservice:
+    image: node:tenant-group
+    build:
+      context: ../../tenant-group-microservice
+      dockerfile: Dockerfile
+    container_name: tenant-group-microservice
+    ports:
+      - "3040:3003"
+    #depends_on:
+    #  - mongo1
+    environment:
+      - MONGO_URI=mongodb://mongos:27017/?directConnection=true
+      - PORT=3003
+      - DB_NAME=tenant-group-db
+    networks:
+      - mongo-cluster
+      - kafka-network
 
 networks:
   mongo-cluster:
