@@ -1,0 +1,41 @@
+services:
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - redis-network
+      - mongo-cluster
+      - kafka-network
+  
+  redis-api:
+    image: node:redis-api
+    build:
+      context: ../../redis-api
+      dockerfile: Dockerfile
+    container_name: redis-api
+    ports:
+      - "6000:6000"
+    environment:
+      - MONGO_API_URL=http://capital-microservice:3001
+      - REDIS_API_PORT=6000
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    networks:
+      - redis-network
+      - mongo-cluster
+      - kafka-network
+
+networks:
+  redis-network:
+    driver: bridge
+    external: true
+  mongo-cluster:
+    driver: bridge
+    external: true
+  kafka-network:
+    driver: bridge
+    external: true
