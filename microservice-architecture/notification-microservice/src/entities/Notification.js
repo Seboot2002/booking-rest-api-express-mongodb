@@ -1,8 +1,10 @@
 class NotificationModel {
 
-    constructor({ message, user, created_at = new Date() }) {
+    constructor({ titulo, descripcion, tipo, user, created_at = new Date() }) {
 
-        this.message = message;
+        this.titulo = titulo;
+        this.descripcion = descripcion;
+        this.tipo = tipo;
         this.created_at = created_at;
         this.user = user;
     }

@@ -10,7 +10,9 @@ class NotificacionUseCase {
     async createNotification(notificationData, userId) {
 
         const notificationModel = new Notificacion({
-            message: notificationData.message,
+            titulo: notificationData.titulo,
+            descripcion: notification.descripcion,
+            tipo: notification.tipo,
             user: userId
         });
 

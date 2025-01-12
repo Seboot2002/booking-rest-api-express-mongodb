@@ -24,7 +24,9 @@ class NofiticationRepository {
             let TimeUserUpdated = event.timestamp;
 
             const result = {
-                message: `Se ha actualizado tu usuario a ${userEmailUpdated}`,
+                titulo: `Se ha actualizado tu usuario a ${userEmailUpdated}`,
+                descripcion: `Se ha hecho una actualizacion de tus datos`,
+                tipo: 1,
                 created_at: TimeUserUpdated,
                 user: event.user_id
             }
@@ -40,7 +42,9 @@ class NofiticationRepository {
     async create(notification) {
 
         const result = this.collection.insertOne({
-            message: notification.message,
+            titulo: notification.titulo,
+            descripcion: notification.descripcion,
+            tipo: notification.tipo,
             created_at: notification.created_at,
             user: notification.user
         });
@@ -92,7 +96,7 @@ class NofiticationRepository {
             { _id: ObjectId.createFromHexString(notificationId)}, 
             {
                 $set: {
-                    message: notificationData.message || currentNotification.message,
+                    titulo: notificationData.titulo || currentNotification.titulo,
                     created_at: notificationData.created_at || currentNotification.created_at,
                     user: notificationData.user || currentNotification.user
                 }
